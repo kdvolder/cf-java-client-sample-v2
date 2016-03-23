@@ -1,11 +1,8 @@
 package com.github.kdvolder.cfv2sample;
 
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 
 import org.cloudfoundry.client.CloudFoundryClient;
-import org.cloudfoundry.client.v2.organizations.ListOrganizationsRequest;
-import org.cloudfoundry.client.v2.organizations.OrganizationResource;
 import org.cloudfoundry.client.v2.serviceinstances.ListServiceInstancesRequest;
 import org.cloudfoundry.client.v2.serviceinstances.ServiceInstanceResource;
 import org.cloudfoundry.operations.CloudFoundryOperations;
@@ -15,7 +12,6 @@ import org.cloudfoundry.operations.spaces.GetSpaceRequest;
 import org.cloudfoundry.spring.client.SpringCloudFoundryClient;
 import org.cloudfoundry.util.PaginationUtils;
 
-import com.fasterxml.jackson.databind.deser.impl.ExternalTypeHandler.Builder;
 import com.google.common.collect.ImmutableList;
 
 import reactor.core.publisher.Flux;
@@ -58,13 +54,13 @@ public class CFV2SampleMain {
 
 	protected static void showApplications() {
 		System.out.println("============================");
-		List<String> names = ImmutableList.copyOf(
-			cfops
-				.applications()
-				.list()
-				.map(ApplicationSummary::getName)
-				.toIterable()
-		);
+		List<String> names = cfops
+			.applications()
+			.list()
+			.map(ApplicationSummary::getName)
+			.toList()
+			.map(ImmutableList::copyOf)
+			.get();
 		System.out.println("Applications: "+names);
 	}
 
@@ -80,12 +76,11 @@ public class CFV2SampleMain {
 
 	protected static void showServices() {
 		System.out.println("============================");
-		ImmutableList<String> serviceNames = ImmutableList.copyOf(
-			requestServices(client)
-				.map((ServiceInstanceResource service) ->
-					service.getEntity().getName())
-				.toIterable()
-		);
+		ImmutableList<String> serviceNames = requestServices(client)
+			.map((ServiceInstanceResource service) -> service.getEntity().getName())
+			.toList()
+			.map(ImmutableList::copyOf)
+			.get();
 		System.out.println("Services: "+serviceNames);
 	}
 
