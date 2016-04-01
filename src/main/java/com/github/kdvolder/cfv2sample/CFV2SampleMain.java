@@ -1,11 +1,9 @@
 package com.github.kdvolder.cfv2sample;
 
-import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Stream;
+import java.util.Map.Entry;
 
 import org.cloudfoundry.client.CloudFoundryClient;
 import org.cloudfoundry.client.v2.serviceinstances.ListServiceInstancesRequest;
@@ -14,8 +12,10 @@ import org.cloudfoundry.operations.CloudFoundryOperations;
 import org.cloudfoundry.operations.CloudFoundryOperationsBuilder;
 import org.cloudfoundry.operations.applications.ApplicationDetail;
 import org.cloudfoundry.operations.applications.ApplicationSummary;
+import org.cloudfoundry.operations.applications.GetApplicationEnvironmentsRequest;
 import org.cloudfoundry.operations.applications.GetApplicationRequest;
 import org.cloudfoundry.operations.applications.SetEnvironmentVariableApplicationRequest;
+import org.cloudfoundry.operations.applications.UnsetEnvironmentVariableApplicationRequest;
 import org.cloudfoundry.operations.services.CreateServiceInstanceRequest;
 import org.cloudfoundry.operations.spaces.GetSpaceRequest;
 import org.cloudfoundry.spring.client.SpringCloudFoundryClient;
@@ -48,8 +48,17 @@ public class CFV2SampleMain {
 		env.put("foo", "ThisisFoo");
 		env.put("bar", "ThisisBar");
 
-		setEnvVars("dododododo", env).get();
+		String appName = "dododododo";
+		setEnvVars(appName, env).get();
 		System.out.println("Finished settting env vars.");
+
+		showEnv(appName);
+
+		for (String keyToRemove : env.keySet()) {
+			System.out.println("Removing '"+keyToRemove+"'");
+			unsetEnv(appName, keyToRemove);
+			showEnv(appName);
+		}
 
 //		createService("konijn", "cloudamqp", "lemur");
 //		showApplicationDetails("demo456");
@@ -57,30 +66,83 @@ public class CFV2SampleMain {
 //		showServices();
 	}
 
+
+	private static void unsetEnv(String appName, String keyToRemove) {
+		cfops.applications()
+		.unsetEnvironmentVariable(UnsetEnvironmentVariableApplicationRequest.builder()
+				.name(appName)
+				.variableName(keyToRemove)
+				.build()
+		)
+		.get();
+	}
+
+
+	private static void showEnv(String appName) {
+		System.out.println("=== dumping env ===");
+		Map<String, Object> env = getEnv(appName).get();
+		for (Entry<String, Object> e : env.entrySet()) {
+			System.out.println(e.getKey()+" = "+e.getValue());
+		}
+		System.out.println("===================");
+	}
+
+	private static Mono<Map<String,Object>> getEnv(String appName) {
+		return cfops.applications().getEnvironments(GetApplicationEnvironmentsRequest.builder()
+				.name(appName)
+				.build()
+		).map((envs) -> envs.getUserProvided());
+	}
+
 	private static Mono<Void> setEnvVars(String appName, Map<String, String> env) {
-		//XXX CF V2: bug in CF V2: https://www.pivotaltracker.com/story/show/116725155
-		// Also this code does not unset env vars, but it probably should.
 		if (env==null) {
 			return Mono.empty();
 		} else {
-			return Flux.fromIterable(env.entrySet())
-			.flatMap((entry) -> {
-				System.out.println("Set var starting: "+entry);
-				return cfops.applications()
-				.setEnvironmentVariable(SetEnvironmentVariableApplicationRequest.builder()
-						.name(appName)
-						.variableName(entry.getKey())
-						.variableValue(entry.getValue())
-						.build()
-				)
-				.after(() -> {
-					System.out.println("Set var complete: "+entry);
-					return Mono.empty();
+			Mono<Void> setAll = Mono.empty();
+			for (Entry<String, String> entry : env.entrySet()) {
+				setAll = setAll.after(() -> {
+					System.out.println("Set var starting: "+entry);
+					return cfops.applications()
+					.setEnvironmentVariable(SetEnvironmentVariableApplicationRequest.builder()
+							.name(appName)
+							.variableName(entry.getKey())
+							.variableValue(entry.getValue())
+							.build()
+					)
+					.after(() -> {
+						System.out.println("Set var complete: "+entry);
+						return Mono.empty();
+					});
 				});
-			})
-			.after();
+			}
+			return setAll;
 		}
 	}
+
+//	private static Mono<Void> setEnvVars(String appName, Map<String, String> env) {
+//		//XXX CF V2: bug in CF V2: https://www.pivotaltracker.com/story/show/116725155
+//		// Also this code does not unset env vars, but it probably should.
+//		if (env==null) {
+//			return Mono.empty();
+//		} else {
+//			return Flux.fromIterable(env.entrySet())
+//			.flatMap((entry) -> {
+//				System.out.println("Set var starting: "+entry);
+//				return cfops.applications()
+//				.setEnvironmentVariable(SetEnvironmentVariableApplicationRequest.builder()
+//						.name(appName)
+//						.variableName(entry.getKey())
+//						.variableValue(entry.getValue())
+//						.build()
+//				)
+//				.after(() -> {
+//					System.out.println("Set var complete: "+entry);
+//					return Mono.empty();
+//				});
+//			})
+//			.after();
+//		}
+//	}
 
 	private static void createService(String name, String service, String plan) {
 		System.out.println("============================");
@@ -134,15 +196,15 @@ public class CFV2SampleMain {
 		System.out.println("Applications: "+names);
 	}
 
-    private static Flux<ServiceInstanceResource> requestServices(CloudFoundryClient cloudFoundryClient) {
-        return PaginationUtils.requestResources((page) -> {
-            	ListServiceInstancesRequest request = ListServiceInstancesRequest.builder()
-            		.page(page)
-    				.spaceId(spaceId)
-    				.build();
-            	return client.serviceInstances().list(request);
-        });
-    }
+	private static Flux<ServiceInstanceResource> requestServices(CloudFoundryClient cloudFoundryClient) {
+		return PaginationUtils.requestResources((page) -> {
+			ListServiceInstancesRequest request = ListServiceInstancesRequest.builder()
+					.page(page)
+					.spaceId(spaceId)
+					.build();
+			return client.serviceInstances().list(request);
+		});
+	}
 
 	protected static void showServices() {
 		System.out.println("============================");
