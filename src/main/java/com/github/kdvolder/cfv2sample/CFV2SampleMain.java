@@ -1,5 +1,6 @@
 package com.github.kdvolder.cfv2sample;
 
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -30,20 +31,37 @@ public class CFV2SampleMain {
 
 	private static final String SPACE_NAME = "kdevolder";
 
-	static SpringCloudFoundryClient client = SpringCloudFoundryClient.builder()
+	SpringCloudFoundryClient client = SpringCloudFoundryClient.builder()
 			.username("kdevolder@gopivotal.com")
 			.password(System.getProperty("cf.password"))
 			.host("api.run.pivotal.io")
 			.build();
 
-	static CloudFoundryOperations cfops = new CloudFoundryOperationsBuilder()
+	CloudFoundryOperations cfops = new CloudFoundryOperationsBuilder()
 			.cloudFoundryClient(client)
 			.target("FrameworksAndRuntimes", SPACE_NAME)
 			.build();
 
-	static String spaceId = getSpaceId();
+	String spaceId = getSpaceId();
 
 	public static void main(String[] args) throws Exception {
+//		new CFV2SampleMain().deleteLastEnvBugDemo();
+//		deleteLastEnvBugDemo();
+//		createService("konijn", "cloudamqp", "lemur");
+//		showApplicationDetails("demo456");
+
+		while (true) {
+			long startTime = System.currentTimeMillis();
+			new CFV2SampleMain().showApplications();
+			long duration = System.currentTimeMillis() - startTime;
+			System.out.println("Duration = "+Duration.ofMillis(duration));
+			System.out.println("Threads  = "+Thread.activeCount());
+		}
+//		showServices();
+	}
+
+
+	void deleteLastEnvBugDemo() {
 		Map<String,String> env = new HashMap<>();
 		env.put("foo", "ThisisFoo");
 		env.put("bar", "ThisisBar");
@@ -59,15 +77,10 @@ public class CFV2SampleMain {
 			unsetEnv(appName, keyToRemove);
 			showEnv(appName);
 		}
-
-//		createService("konijn", "cloudamqp", "lemur");
-//		showApplicationDetails("demo456");
-//		showApplications();
-//		showServices();
 	}
 
 
-	private static void unsetEnv(String appName, String keyToRemove) {
+	void unsetEnv(String appName, String keyToRemove) {
 		cfops.applications()
 		.unsetEnvironmentVariable(UnsetEnvironmentVariableApplicationRequest.builder()
 				.name(appName)
@@ -78,7 +91,7 @@ public class CFV2SampleMain {
 	}
 
 
-	private static void showEnv(String appName) {
+	void showEnv(String appName) {
 		System.out.println("=== dumping env ===");
 		Map<String, Object> env = getEnv(appName).get();
 		for (Entry<String, Object> e : env.entrySet()) {
@@ -87,14 +100,14 @@ public class CFV2SampleMain {
 		System.out.println("===================");
 	}
 
-	private static Mono<Map<String,Object>> getEnv(String appName) {
+	Mono<Map<String,Object>> getEnv(String appName) {
 		return cfops.applications().getEnvironments(GetApplicationEnvironmentsRequest.builder()
 				.name(appName)
 				.build()
 		).map((envs) -> envs.getUserProvided());
 	}
 
-	private static Mono<Void> setEnvVars(String appName, Map<String, String> env) {
+	Mono<Void> setEnvVars(String appName, Map<String, String> env) {
 		if (env==null) {
 			return Mono.empty();
 		} else {
@@ -144,7 +157,7 @@ public class CFV2SampleMain {
 //		}
 //	}
 
-	private static void createService(String name, String service, String plan) {
+	void createService(String name, String service, String plan) {
 		System.out.println("============================");
 		cfops.services().createInstance(CreateServiceInstanceRequest.builder()
 				.serviceInstanceName(name)
@@ -156,7 +169,7 @@ public class CFV2SampleMain {
 		System.out.println("Created a Service!");
 	}
 
-	private static void showApplicationDetails(String name) {
+	void showApplicationDetails(String name) {
 		System.out.println("============================");
 		ApplicationDetail app = cfops.applications()
 		.get(GetApplicationRequest.builder()
@@ -170,7 +183,7 @@ public class CFV2SampleMain {
 		System.out.println("buildpack = " + app.getBuildpack());
 	}
 
-	private static String getSpaceId() {
+	String getSpaceId() {
 		try {
 			return cfops.spaces().get(spaceWithName(SPACE_NAME)).toCompletableFuture().get().getId();
 		} catch (Exception e) {
@@ -178,13 +191,13 @@ public class CFV2SampleMain {
 		}
 	}
 
-	private static GetSpaceRequest spaceWithName(String spaceName) {
+	GetSpaceRequest spaceWithName(String spaceName) {
 		return GetSpaceRequest.builder()
 				.name(spaceName)
 				.build();
 	}
 
-	protected static void showApplications() {
+	void showApplications() {
 		System.out.println("============================");
 		List<String> names = cfops
 			.applications()
@@ -196,7 +209,7 @@ public class CFV2SampleMain {
 		System.out.println("Applications: "+names);
 	}
 
-	private static Flux<ServiceInstanceResource> requestServices(CloudFoundryClient cloudFoundryClient) {
+	Flux<ServiceInstanceResource> requestServices(CloudFoundryClient cloudFoundryClient) {
 		return PaginationUtils.requestResources((page) -> {
 			ListServiceInstancesRequest request = ListServiceInstancesRequest.builder()
 					.page(page)
@@ -206,7 +219,7 @@ public class CFV2SampleMain {
 		});
 	}
 
-	protected static void showServices() {
+	void showServices() {
 		System.out.println("============================");
 		ImmutableList<String> serviceNames = requestServices(client)
 			.map((ServiceInstanceResource service) -> service.getEntity().getName())
