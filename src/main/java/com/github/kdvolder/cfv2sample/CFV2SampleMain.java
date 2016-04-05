@@ -45,19 +45,38 @@ public class CFV2SampleMain {
 	String spaceId = getSpaceId();
 
 	public static void main(String[] args) throws Exception {
-//		new CFV2SampleMain().deleteLastEnvBugDemo();
-//		deleteLastEnvBugDemo();
-//		createService("konijn", "cloudamqp", "lemur");
-//		showApplicationDetails("demo456");
-
+		int i = 1;
 		while (true) {
+			System.out.println("Iteration: "+(i++));
 			long startTime = System.currentTimeMillis();
 			new CFV2SampleMain().showApplications();
 			long duration = System.currentTimeMillis() - startTime;
 			System.out.println("Duration = "+Duration.ofMillis(duration));
 			System.out.println("Threads  = "+Thread.activeCount());
+			dumpThreadNames();
+			System.gc(); System.gc(); System.gc(); System.gc();
+			System.gc(); System.gc(); System.gc(); System.gc();
+			System.gc(); System.gc(); System.gc(); System.gc();
+
+			System.out.println("============================");
 		}
+
+
+
+//		new CFV2SampleMain().deleteLastEnvBugDemo();
+//		deleteLastEnvBugDemo();
+//		createService("konijn", "cloudamqp", "lemur");
+//		showApplicationDetails("demo456");
 //		showServices();
+	}
+
+
+	private static void dumpThreadNames() {
+		Thread[] ts = new Thread[Thread.activeCount()];
+		int count = Thread.enumerate(ts);
+		for (int i = 0; i < count; i++) {
+			System.out.println(ts[i].getName());
+		}
 	}
 
 
@@ -198,7 +217,6 @@ public class CFV2SampleMain {
 	}
 
 	void showApplications() {
-		System.out.println("============================");
 		List<String> names = cfops
 			.applications()
 			.list()
