@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import org.cloudfoundry.client.CloudFoundryClient;
+import org.cloudfoundry.client.v2.serviceinstances.DeleteServiceInstanceRequest;
 import org.cloudfoundry.client.v2.serviceinstances.ListServiceInstancesRequest;
 import org.cloudfoundry.client.v2.serviceinstances.ServiceInstanceResource;
 import org.cloudfoundry.operations.CloudFoundryOperations;
@@ -45,6 +46,36 @@ public class CFV2SampleMain {
 	String spaceId = getSpaceId();
 
 	public static void main(String[] args) throws Exception {
+		new CFV2SampleMain().deleteAllServices();
+//		threadLeaksDemo();
+//		new CFV2SampleMain().deleteLastEnvBugDemo();
+//		deleteLastEnvBugDemo();
+//		createService("konijn", "cloudamqp", "lemur");
+//		showApplicationDetails("demo456");
+//		showServices();
+	}
+
+
+	void deleteAllServices() {
+		System.out.println("Deleting all service instances...");
+		cfops.services().listInstances()
+		.flatMap((service) -> {
+			System.out.println("Found: "+service.getName());
+			return client.serviceInstances().delete(DeleteServiceInstanceRequest.builder()
+					.serviceInstanceId(service.getId())
+					.build()
+			).then((response) -> {
+				System.out.println("Deleted: '"+service.getName());
+				return Mono.empty();
+			});
+		})
+		.after()
+		.get();
+		System.out.println("Deleting all service instances... DONE");
+	}
+
+
+	static void threadLeaksDemo() {
 		int i = 1;
 		while (true) {
 			System.out.println("Iteration: "+(i++));
@@ -60,14 +91,6 @@ public class CFV2SampleMain {
 
 			System.out.println("============================");
 		}
-
-
-
-//		new CFV2SampleMain().deleteLastEnvBugDemo();
-//		deleteLastEnvBugDemo();
-//		createService("konijn", "cloudamqp", "lemur");
-//		showApplicationDetails("demo456");
-//		showServices();
 	}
 
 
