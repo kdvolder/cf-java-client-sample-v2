@@ -1,10 +1,12 @@
 package com.github.kdvolder.cfv2sample;
 
 import java.time.Duration;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.function.Predicate;
 
 import org.cloudfoundry.client.CloudFoundryClient;
 import org.cloudfoundry.client.v2.serviceinstances.DeleteServiceInstanceRequest;
@@ -18,6 +20,11 @@ import org.cloudfoundry.operations.applications.GetApplicationEnvironmentsReques
 import org.cloudfoundry.operations.applications.GetApplicationRequest;
 import org.cloudfoundry.operations.applications.SetEnvironmentVariableApplicationRequest;
 import org.cloudfoundry.operations.applications.UnsetEnvironmentVariableApplicationRequest;
+import org.cloudfoundry.operations.routes.ListRoutesRequest;
+import org.cloudfoundry.operations.routes.ListRoutesRequest.Level;
+import org.cloudfoundry.operations.routes.MapRouteRequest;
+import org.cloudfoundry.operations.routes.Route;
+import org.cloudfoundry.operations.routes.UnmapRouteRequest;
 import org.cloudfoundry.operations.services.CreateServiceInstanceRequest;
 import org.cloudfoundry.operations.spaces.GetSpaceRequest;
 import org.cloudfoundry.spring.client.SpringCloudFoundryClient;
@@ -46,13 +53,82 @@ public class CFV2SampleMain {
 	String spaceId = getSpaceId();
 
 	public static void main(String[] args) throws Exception {
-		new CFV2SampleMain().deleteAllServices();
+		new CFV2SampleMain().mapAndUnMapRoutesDemo();
+//		new CFV2SampleMain().deleteAllServices();
 //		threadLeaksDemo();
 //		new CFV2SampleMain().deleteLastEnvBugDemo();
 //		deleteLastEnvBugDemo();
 //		createService("konijn", "cloudamqp", "lemur");
 //		showApplicationDetails("demo456");
 //		showServices();
+	}
+
+
+	private void mapAndUnMapRoutesDemo() {
+		String appName = "another-project-again";
+		String host = "some-host-23";
+		String domain = "cfapps.io";
+
+		showRoutes(appName);
+
+		mapRoute(appName, host, domain);
+		showRoutes(appName);
+
+		unmapRoute(appName, host, domain);
+		showRoutes(appName);
+
+		mapRoute(appName, host, domain);
+		showRoutes(appName);
+	}
+
+
+	private void unmapRoute(String appName, String host, String domain) {
+		cfops.routes().unmap(UnmapRouteRequest.builder()
+				.applicationName(appName)
+				.host(host)
+				.domain(domain)
+				.build()
+		)
+		.get();
+	}
+
+	private void mapRoute(String appName, String host, String domain) {
+		System.out.println("mapRoute "+appName+" -> "+host+" . "+domain);
+		cfops.routes().map(MapRouteRequest.builder()
+				.applicationName(appName)
+				.host(host)
+				.domain(domain)
+				.build()
+		)
+		.get();
+	}
+
+
+	private void showRoutes(String appName) {
+		System.out.println(">>> Routes for '"+appName+"'");
+		for (Route r : getRoutes(appName)) {
+			System.out.println(r);
+		}
+		System.out.println("<<< Routes for '"+appName+"'");
+	}
+
+
+	private Collection<Route> getRoutes(String appName) {
+		return cfops.routes().list(ListRoutesRequest.builder()
+				.level(Level.SPACE)
+				.build()
+		)
+		.filter(belongsTo(appName))
+		.toList()
+		.map(ImmutableList::copyOf)
+		.get();
+	}
+
+
+	private Predicate<Route> belongsTo(String appName) {
+		return ((route) ->
+			route.getApplications().stream().anyMatch((app) -> app.equals(appName))
+		);
 	}
 
 
