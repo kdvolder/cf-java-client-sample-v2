@@ -8,7 +8,10 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.function.Predicate;
 
+import org.apache.commons.lang.RandomStringUtils;
 import org.cloudfoundry.client.CloudFoundryClient;
+import org.cloudfoundry.client.v2.info.GetInfoRequest;
+import org.cloudfoundry.client.v2.info.GetInfoResponse;
 import org.cloudfoundry.client.v2.serviceinstances.DeleteServiceInstanceRequest;
 import org.cloudfoundry.client.v2.serviceinstances.ListServiceInstancesRequest;
 import org.cloudfoundry.client.v2.serviceinstances.ServiceInstanceResource;
@@ -26,6 +29,7 @@ import org.cloudfoundry.operations.routes.MapRouteRequest;
 import org.cloudfoundry.operations.routes.Route;
 import org.cloudfoundry.operations.routes.UnmapRouteRequest;
 import org.cloudfoundry.operations.services.CreateServiceInstanceRequest;
+import org.cloudfoundry.operations.services.ServiceInstance;
 import org.cloudfoundry.operations.spaces.GetSpaceRequest;
 import org.cloudfoundry.spring.client.SpringCloudFoundryClient;
 import org.cloudfoundry.util.PaginationUtils;
@@ -53,7 +57,11 @@ public class CFV2SampleMain {
 	String spaceId = getSpaceId();
 
 	public static void main(String[] args) throws Exception {
-		new CFV2SampleMain().mapAndUnMapRoutesDemo();
+//		new CFV2SampleMain().showInfo();
+		new CFV2SampleMain().createLotsOfServices(31, 60);
+
+//		new CFV2SampleMain().showServices();
+//		new CFV2SampleMain().mapAndUnMapRoutesDemo();
 //		new CFV2SampleMain().deleteAllServices();
 //		threadLeaksDemo();
 //		new CFV2SampleMain().deleteLastEnvBugDemo();
@@ -61,6 +69,26 @@ public class CFV2SampleMain {
 //		createService("konijn", "cloudamqp", "lemur");
 //		showApplicationDetails("demo456");
 //		showServices();
+	}
+
+
+	private void showInfo() {
+		System.out.println(client.info().get(GetInfoRequest.builder().build()).get());
+	}
+
+
+	private void createLotsOfServices(int lowNum, int highNum) {
+		for (int i = lowNum; i <= highNum; i++) {
+			String name = String.format("%02d", i)+"-"+RandomStringUtils.randomAlphabetic(10);
+			createService(name, "cloudamqp", "lemur");
+			System.out.println("Created service : "+name);
+		}
+	}
+
+
+	private void showInfos() {
+		GetInfoResponse response = client.info().get(GetInfoRequest.builder().build()).get();
+		System.out.println(response);
 	}
 
 
@@ -139,6 +167,7 @@ public class CFV2SampleMain {
 			System.out.println("Found: "+service.getName());
 			return client.serviceInstances().delete(DeleteServiceInstanceRequest.builder()
 					.serviceInstanceId(service.getId())
+					.recursive(true)
 					.build()
 			).then((response) -> {
 				System.out.println("Deleted: '"+service.getName());
@@ -276,7 +305,6 @@ public class CFV2SampleMain {
 //	}
 
 	void createService(String name, String service, String plan) {
-		System.out.println("============================");
 		cfops.services().createInstance(CreateServiceInstanceRequest.builder()
 				.serviceInstanceName(name)
 				.serviceName(service)
@@ -284,7 +312,6 @@ public class CFV2SampleMain {
 				.build()
 		)
 		.get();
-		System.out.println("Created a Service!");
 	}
 
 	void showApplicationDetails(String name) {
@@ -338,12 +365,9 @@ public class CFV2SampleMain {
 
 	void showServices() {
 		System.out.println("============================");
-		ImmutableList<String> serviceNames = requestServices(client)
-			.map((ServiceInstanceResource service) -> service.getEntity().getName())
-			.toList()
-			.map(ImmutableList::copyOf)
-			.get();
-		System.out.println("Services: "+serviceNames);
+		for (ServiceInstance s : cfops.services().listInstances().toIterable()) {
+			System.out.println(s);
+		}
 	}
 
 
