@@ -22,7 +22,7 @@ public class EmitterProcessorSample {
 	 * Calls the 'legacy' search engine and returns its results as a Flux.
 	 */
 	Flux<String> searchAsFlux(int query) {
-		EmitterProcessor<String> emitter = EmitterProcessor.<String>create().connect();
+		EmitterProcessor<String> emitter = EmitterProcessor.<String>replay(200).connect();
 		search(query, new SearchRequestor() {
 			@Override
 			public void accept(String result) {
@@ -75,7 +75,7 @@ public class EmitterProcessorSample {
 	///////////////////////////////////////////////////// cruft //////////////////////////////////////
 
 	public static void main(String[] args) {
-		new EmitterProcessorSample().legacyMain();
+		new EmitterProcessorSample().reactiveMain();
 	}
 
 
