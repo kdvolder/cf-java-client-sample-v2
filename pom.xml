@@ -15,7 +15,9 @@
 			<id>repo-spring-io-snapshots</id>
 			<name>Spring Maven Snapshot</name>
 			<url>http://repo.spring.io/snapshot</url>
-			<snapshots><enabled>true</enabled></snapshots>
+			<snapshots>
+				<enabled>true</enabled>
+			</snapshots>
 		</repository>
 	</repositories>
 
@@ -23,17 +25,17 @@
 		<dependency>
 			<groupId>org.cloudfoundry</groupId>
 			<artifactId>cloudfoundry-client-spring</artifactId>
-			<version>2.0.0.BUILD-SNAPSHOT</version>
+			<version>2.0.0.M4</version>
 		</dependency>
 		<dependency>
 			<groupId>org.cloudfoundry</groupId>
 			<artifactId>cloudfoundry-operations</artifactId>
-			<version>2.0.0.BUILD-SNAPSHOT</version>
+			<version>2.0.0.M4</version>
 		</dependency>
 		<dependency>
 			<groupId>io.projectreactor</groupId>
 			<artifactId>reactor-core</artifactId>
-			<version>2.5.0.BUILD-SNAPSHOT</version>
+			<version>2.5.0.M3</version>
 		</dependency>
 		<dependency>
 			<groupId>com.google.guava</groupId>
@@ -49,6 +51,11 @@
 			<groupId>com.google.guava</groupId>
 			<artifactId>guava</artifactId>
 			<version>15.0</version>
+		</dependency>
+		<dependency>
+			<groupId>commons-lang</groupId>
+			<artifactId>commons-lang</artifactId>
+			<version>2.6</version>
 		</dependency>
 	</dependencies>
 
