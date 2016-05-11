@@ -57,8 +57,9 @@ public class CFV2SampleMain {
 	String spaceId = getSpaceId();
 
 	public static void main(String[] args) throws Exception {
+		new CFV2SampleMain().showRoutes("foo");
 //		new CFV2SampleMain().showInfo();
-		new CFV2SampleMain().createLotsOfServices(31, 60);
+//		new CFV2SampleMain().createLotsOfServices(31, 60);
 
 //		new CFV2SampleMain().showServices();
 //		new CFV2SampleMain().mapAndUnMapRoutesDemo();
@@ -155,7 +156,7 @@ public class CFV2SampleMain {
 
 	private Predicate<Route> belongsTo(String appName) {
 		return ((route) ->
-			route.getApplications().stream().anyMatch((app) -> app.equals(appName))
+			route.getApplications().contains(appName)
 		);
 	}
 

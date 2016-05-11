@@ -5,8 +5,12 @@ import java.util.concurrent.Executors;
 
 import reactor.core.publisher.EmitterProcessor;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.ReplayProcessor;
 
 public class EmitterProcessorSample {
+
+	final int producer_delay = 100;
+	final int consumer_delay = 200;
 
 	Executor exec = Executors.newCachedThreadPool();
 
@@ -22,7 +26,7 @@ public class EmitterProcessorSample {
 	 * Calls the 'legacy' search engine and returns its results as a Flux.
 	 */
 	Flux<String> searchAsFlux(int query) {
-		EmitterProcessor<String> emitter = EmitterProcessor.<String>replay(200).connect();
+		ReplayProcessor<String> emitter = ReplayProcessor.<String>create(10).connect();
 		search(query, new SearchRequestor() {
 			@Override
 			public void accept(String result) {
@@ -58,7 +62,7 @@ public class EmitterProcessorSample {
 		exec.execute(() -> {
 			for (int i = 1; i <= query; i++) {
 				requestor.accept("Result "+i);
-				sleep(200);
+				sleep(producer_delay);
 			}
 			requestor.done();
 		});
