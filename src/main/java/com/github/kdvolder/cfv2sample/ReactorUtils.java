@@ -30,6 +30,11 @@ public class ReactorUtils {
 	 * Sorts the elements in a flux in a moving time window. I.e. this assumes element order may be
 	 * scrambled but the scrambling has a certain 'time localilty' to it. So we only need to consider
 	 * sorting of elements that arrive 'close to eachother'.
+	 * <p>
+	 * WARNING: The returned flux is intended for a single subscriber. It only maintains a
+	 * single buffer for sorting stream elements. This buffer is consumed when elements
+	 * are released to any subscriber. Therefore if one subscriber received a element it is gone
+	 * from the buffer and will not be delivered to the other subscribers.
 	 *
 	 * @param stream The stream to be sorted
 	 * @param comparator Compare function to sort with
