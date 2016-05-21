@@ -15,12 +15,16 @@ import org.cloudfoundry.client.v2.info.GetInfoResponse;
 import org.cloudfoundry.client.v2.serviceinstances.DeleteServiceInstanceRequest;
 import org.cloudfoundry.client.v2.serviceinstances.ListServiceInstancesRequest;
 import org.cloudfoundry.client.v2.serviceinstances.ServiceInstanceResource;
+import org.cloudfoundry.doppler.DopplerClient;
+import org.cloudfoundry.doppler.LogMessage;
+import org.cloudfoundry.doppler.LogMessage.MessageType;
 import org.cloudfoundry.operations.CloudFoundryOperations;
 import org.cloudfoundry.operations.CloudFoundryOperationsBuilder;
 import org.cloudfoundry.operations.applications.ApplicationDetail;
 import org.cloudfoundry.operations.applications.ApplicationSummary;
 import org.cloudfoundry.operations.applications.GetApplicationEnvironmentsRequest;
 import org.cloudfoundry.operations.applications.GetApplicationRequest;
+import org.cloudfoundry.operations.applications.LogsRequest;
 import org.cloudfoundry.operations.applications.SetEnvironmentVariableApplicationRequest;
 import org.cloudfoundry.operations.applications.UnsetEnvironmentVariableApplicationRequest;
 import org.cloudfoundry.operations.routes.ListRoutesRequest;
@@ -31,6 +35,7 @@ import org.cloudfoundry.operations.routes.UnmapRouteRequest;
 import org.cloudfoundry.operations.services.CreateServiceInstanceRequest;
 import org.cloudfoundry.operations.services.ServiceInstance;
 import org.cloudfoundry.operations.spaces.GetSpaceRequest;
+import org.cloudfoundry.reactor.doppler.ReactorDopplerClient;
 import org.cloudfoundry.spring.client.SpringCloudFoundryClient;
 import org.cloudfoundry.util.PaginationUtils;
 
@@ -49,17 +54,24 @@ public class CFV2SampleMain {
 			.host("api.run.pivotal.io")
 			.build();
 
+	DopplerClient doppler = ReactorDopplerClient.builder()
+			.cloudFoundryClient(client)
+			.build();
+
 	CloudFoundryOperations cfops = new CloudFoundryOperationsBuilder()
 			.cloudFoundryClient(client)
+			.dopplerClient(doppler)
 			.target("FrameworksAndRuntimes", SPACE_NAME)
 			.build();
 
 	String spaceId = getSpaceId();
 
 	public static void main(String[] args) throws Exception {
-		new CFV2SampleMain().showRoutes("foo");
+		new CFV2SampleMain().streamLogs("boot13-hahah");
+
+//		new CFV2SampleMain().showRoutes("foo");
 //		new CFV2SampleMain().showInfo();
-//		new CFV2SampleMain().createLotsOfServices(31, 60);
+//		new CFV2SampleMain().createLotsOfServices(1, 30);
 
 //		new CFV2SampleMain().showServices();
 //		new CFV2SampleMain().mapAndUnMapRoutesDemo();
@@ -73,6 +85,33 @@ public class CFV2SampleMain {
 	}
 
 
+	private void streamLogs(String app) {
+		ReactorUtils.sort(
+			cfops.applications().logs(LogsRequest.builder()
+					.name(app)
+					.build()
+			)
+			,
+			(m1, m2) -> Long.compare(m1.getTimestamp(), m2.getTimestamp()),
+			Duration.ofSeconds(1)
+		)
+		.subscribe(
+				(msg) -> {
+					System.out.println(msg.getMessage());
+				},
+				(error) -> {
+					error.printStackTrace();
+				}
+		);
+	}
+
+
+	private void getAccessToken() {
+		String token = client.getAccessToken().get();
+		System.out.println("accessToken = '"+token+"'");
+	}
+
+
 	private void showInfo() {
 		System.out.println(client.info().get(GetInfoRequest.builder().build()).get());
 	}
@@ -80,7 +119,7 @@ public class CFV2SampleMain {
 
 	private void createLotsOfServices(int lowNum, int highNum) {
 		for (int i = lowNum; i <= highNum; i++) {
-			String name = String.format("%02d", i)+"-"+RandomStringUtils.randomAlphabetic(10);
+			String name = "CCC-"+String.format("%02d", i)+"-"+RandomStringUtils.randomAlphabetic(10);
 			createService(name, "cloudamqp", "lemur");
 			System.out.println("Created service : "+name);
 		}
