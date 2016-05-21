@@ -63,9 +63,7 @@ public class ReactorUtils {
 			.delaySubscription(bufferTime);
 
 			public SorterAccumulator next(Flux<Tuple2<T, Long>> window) {
-				window.subscribe(
-						holdingPen::add
-				);
+				window.subscribe(holdingPen::add);
 				return this;
 			}
 
