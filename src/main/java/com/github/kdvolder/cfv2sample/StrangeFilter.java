@@ -24,7 +24,7 @@ public class StrangeFilter {
 				.cache(20)
 				;
 
-		filtered.consume(print("end"));
+		filtered.subscribe(print("end"));
 	}
 
 	private static <T> Consumer<T> print(String msg) {

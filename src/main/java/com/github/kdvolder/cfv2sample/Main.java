@@ -5,14 +5,14 @@ import java.util.function.Consumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import reactor.core.publisher.Computations;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Scheduler;
+import reactor.core.scheduler.Schedulers;
 
 public class Main {
 
-	private static final Scheduler scheduler = Computations.concurrent("blocking-io");
+	private static final Scheduler scheduler = Schedulers.elastic();
 	
 	private static Logger foo = LoggerFactory.getLogger("foo");
 

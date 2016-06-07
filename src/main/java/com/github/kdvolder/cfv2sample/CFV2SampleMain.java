@@ -16,8 +16,6 @@ import org.cloudfoundry.client.v2.serviceinstances.DeleteServiceInstanceRequest;
 import org.cloudfoundry.client.v2.serviceinstances.ListServiceInstancesRequest;
 import org.cloudfoundry.client.v2.serviceinstances.ServiceInstanceResource;
 import org.cloudfoundry.doppler.DopplerClient;
-import org.cloudfoundry.doppler.LogMessage;
-import org.cloudfoundry.doppler.LogMessage.MessageType;
 import org.cloudfoundry.operations.CloudFoundryOperations;
 import org.cloudfoundry.operations.CloudFoundryOperationsBuilder;
 import org.cloudfoundry.operations.applications.ApplicationDetail;
@@ -27,8 +25,8 @@ import org.cloudfoundry.operations.applications.GetApplicationRequest;
 import org.cloudfoundry.operations.applications.LogsRequest;
 import org.cloudfoundry.operations.applications.SetEnvironmentVariableApplicationRequest;
 import org.cloudfoundry.operations.applications.UnsetEnvironmentVariableApplicationRequest;
+import org.cloudfoundry.operations.routes.Level;
 import org.cloudfoundry.operations.routes.ListRoutesRequest;
-import org.cloudfoundry.operations.routes.ListRoutesRequest.Level;
 import org.cloudfoundry.operations.routes.MapRouteRequest;
 import org.cloudfoundry.operations.routes.Route;
 import org.cloudfoundry.operations.routes.UnmapRouteRequest;
@@ -67,9 +65,9 @@ public class CFV2SampleMain {
 	String spaceId = getSpaceId();
 
 	public static void main(String[] args) throws Exception {
-		new CFV2SampleMain().streamLogs("boot13-hahah");
+//		new CFV2SampleMain().streamLogs("boot13-hahah");
 
-//		new CFV2SampleMain().showRoutes("foo");
+		new CFV2SampleMain().showRoutes("demo-ksksks");
 //		new CFV2SampleMain().showInfo();
 //		new CFV2SampleMain().createLotsOfServices(1, 30);
 
@@ -107,13 +105,13 @@ public class CFV2SampleMain {
 
 
 	private void getAccessToken() {
-		String token = client.getAccessToken().get();
+		String token = client.getAccessToken().block();
 		System.out.println("accessToken = '"+token+"'");
 	}
 
 
 	private void showInfo() {
-		System.out.println(client.info().get(GetInfoRequest.builder().build()).get());
+		System.out.println(client.info().get(GetInfoRequest.builder().build()).block());
 	}
 
 
@@ -127,7 +125,7 @@ public class CFV2SampleMain {
 
 
 	private void showInfos() {
-		GetInfoResponse response = client.info().get(GetInfoRequest.builder().build()).get();
+		GetInfoResponse response = client.info().get(GetInfoRequest.builder().build()).block();
 		System.out.println(response);
 	}
 
@@ -157,7 +155,7 @@ public class CFV2SampleMain {
 				.domain(domain)
 				.build()
 		)
-		.get();
+		.block();
 	}
 
 	private void mapRoute(String appName, String host, String domain) {
@@ -168,28 +166,28 @@ public class CFV2SampleMain {
 				.domain(domain)
 				.build()
 		)
-		.get();
+		.block();
 	}
 
 
 	private void showRoutes(String appName) {
 		System.out.println(">>> Routes for '"+appName+"'");
-		for (Route r : getRoutes(appName)) {
-			System.out.println(r);
+		for (Route r : getRoutes(appName).toIterable()) {
+			System.out.println("FOUND: "+r);
 		}
 		System.out.println("<<< Routes for '"+appName+"'");
 	}
 
 
-	private Collection<Route> getRoutes(String appName) {
+	private Flux<Route> getRoutes(String appName) {
 		return cfops.routes().list(ListRoutesRequest.builder()
 				.level(Level.SPACE)
 				.build()
-		)
-		.filter(belongsTo(appName))
-		.toList()
-		.map(ImmutableList::copyOf)
-		.get();
+		);
+//		.filter(belongsTo(appName))
+//		.toList()
+//		.map(ImmutableList::copyOf)
+//		.get();
 	}
 
 
@@ -214,8 +212,8 @@ public class CFV2SampleMain {
 				return Mono.empty();
 			});
 		})
-		.after()
-		.get();
+		.then()
+		.block();
 		System.out.println("Deleting all service instances... DONE");
 	}
 
@@ -254,7 +252,7 @@ public class CFV2SampleMain {
 		env.put("bar", "ThisisBar");
 
 		String appName = "dododododo";
-		setEnvVars(appName, env).get();
+		setEnvVars(appName, env).block();
 		System.out.println("Finished settting env vars.");
 
 		showEnv(appName);
@@ -274,13 +272,13 @@ public class CFV2SampleMain {
 				.variableName(keyToRemove)
 				.build()
 		)
-		.get();
+		.block();
 	}
 
 
 	void showEnv(String appName) {
 		System.out.println("=== dumping env ===");
-		Map<String, Object> env = getEnv(appName).get();
+		Map<String, Object> env = getEnv(appName).block();
 		for (Entry<String, Object> e : env.entrySet()) {
 			System.out.println(e.getKey()+" = "+e.getValue());
 		}
@@ -300,20 +298,13 @@ public class CFV2SampleMain {
 		} else {
 			Mono<Void> setAll = Mono.empty();
 			for (Entry<String, String> entry : env.entrySet()) {
-				setAll = setAll.after(() -> {
-					System.out.println("Set var starting: "+entry);
-					return cfops.applications()
-					.setEnvironmentVariable(SetEnvironmentVariableApplicationRequest.builder()
-							.name(appName)
-							.variableName(entry.getKey())
-							.variableValue(entry.getValue())
-							.build()
-					)
-					.after(() -> {
-						System.out.println("Set var complete: "+entry);
-						return Mono.empty();
-					});
-				});
+				setAll = setAll.then(cfops.applications()
+				.setEnvironmentVariable(SetEnvironmentVariableApplicationRequest.builder()
+						.name(appName)
+						.variableName(entry.getKey())
+						.variableValue(entry.getValue())
+						.build()
+				));
 			}
 			return setAll;
 		}
@@ -351,7 +342,7 @@ public class CFV2SampleMain {
 				.planName(plan)
 				.build()
 		)
-		.get();
+		.block();
 	}
 
 	void showApplicationDetails(String name) {
@@ -361,7 +352,7 @@ public class CFV2SampleMain {
 			.name(name)
 			.build()
 		)
-		.get();
+		.block();
 
 		System.out.println("name = "+app.getName());
 		System.out.println("requested state = "+app.getRequestedState());
@@ -370,7 +361,7 @@ public class CFV2SampleMain {
 
 	String getSpaceId() {
 		try {
-			return cfops.spaces().get(spaceWithName(SPACE_NAME)).toCompletableFuture().get().getId();
+			return cfops.spaces().get(spaceWithName(SPACE_NAME)).block().getId();
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
@@ -387,9 +378,9 @@ public class CFV2SampleMain {
 			.applications()
 			.list()
 			.map(ApplicationSummary::getName)
-			.toList()
+			.collectList()
 			.map(ImmutableList::copyOf)
-			.get();
+			.block();
 		System.out.println("Applications: "+names);
 	}
 
