@@ -1,7 +1,6 @@
 package com.github.kdvolder.cfv2sample;
 
 import java.time.Duration;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -34,7 +33,9 @@ import org.cloudfoundry.operations.services.CreateServiceInstanceRequest;
 import org.cloudfoundry.operations.services.ServiceInstance;
 import org.cloudfoundry.operations.spaces.GetSpaceRequest;
 import org.cloudfoundry.reactor.doppler.ReactorDopplerClient;
+import org.cloudfoundry.reactor.uaa.ReactorUaaClient;
 import org.cloudfoundry.spring.client.SpringCloudFoundryClient;
+import org.cloudfoundry.uaa.UaaClient;
 import org.cloudfoundry.util.PaginationUtils;
 
 import com.google.common.collect.ImmutableList;
@@ -51,6 +52,10 @@ public class CFV2SampleMain {
 			.password(System.getProperty("cf.password"))
 			.host("api.run.pivotal.io")
 			.build();
+	
+	UaaClient uaaClient = ReactorUaaClient.builder()
+			.cloudFoundryClient(client)
+			.build();
 
 	DopplerClient doppler = ReactorDopplerClient.builder()
 			.cloudFoundryClient(client)
@@ -59,15 +64,24 @@ public class CFV2SampleMain {
 	CloudFoundryOperations cfops = new CloudFoundryOperationsBuilder()
 			.cloudFoundryClient(client)
 			.dopplerClient(doppler)
+			.uaaClient(uaaClient)
 			.target("FrameworksAndRuntimes", SPACE_NAME)
 			.build();
 
 	String spaceId = getSpaceId();
 
+	private void getSshCode() {
+		System.out.println("ssh code = '"+cfops.advanced().sshCode().block()+"'");
+	}
+
 	public static void main(String[] args) throws Exception {
 //		new CFV2SampleMain().streamLogs("boot13-hahah");
+//		new CFV2SampleMain().showRoutes("demo-ksksks");
+		new CFV2SampleMain().getSshCode();
+		
+//		new CFV2SampleMain().streamLogs("boot13-hahah");
 
-		new CFV2SampleMain().showRoutes("demo-ksksks");
+//		new CFV2SampleMain().showRoutes("demo-ksksks");
 //		new CFV2SampleMain().showInfo();
 //		new CFV2SampleMain().createLotsOfServices(1, 30);
 
@@ -81,7 +95,6 @@ public class CFV2SampleMain {
 //		showApplicationDetails("demo456");
 //		showServices();
 	}
-
 
 	private void streamLogs(String app) {
 		ReactorUtils.sort(
@@ -244,8 +257,6 @@ public class CFV2SampleMain {
 			System.out.println(ts[i].getName());
 		}
 	}
-
-
 	void deleteLastEnvBugDemo() {
 		Map<String,String> env = new HashMap<>();
 		env.put("foo", "ThisisFoo");
@@ -309,31 +320,6 @@ public class CFV2SampleMain {
 			return setAll;
 		}
 	}
-
-//	private static Mono<Void> setEnvVars(String appName, Map<String, String> env) {
-//		//XXX CF V2: bug in CF V2: https://www.pivotaltracker.com/story/show/116725155
-//		// Also this code does not unset env vars, but it probably should.
-//		if (env==null) {
-//			return Mono.empty();
-//		} else {
-//			return Flux.fromIterable(env.entrySet())
-//			.flatMap((entry) -> {
-//				System.out.println("Set var starting: "+entry);
-//				return cfops.applications()
-//				.setEnvironmentVariable(SetEnvironmentVariableApplicationRequest.builder()
-//						.name(appName)
-//						.variableName(entry.getKey())
-//						.variableValue(entry.getValue())
-//						.build()
-//				)
-//				.after(() -> {
-//					System.out.println("Set var complete: "+entry);
-//					return Mono.empty();
-//				});
-//			})
-//			.after();
-//		}
-//	}
 
 	void createService(String name, String service, String plan) {
 		cfops.services().createInstance(CreateServiceInstanceRequest.builder()
@@ -400,7 +386,4 @@ public class CFV2SampleMain {
 			System.out.println(s);
 		}
 	}
-
-
-
 }
