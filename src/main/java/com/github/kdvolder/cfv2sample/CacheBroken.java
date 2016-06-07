@@ -12,7 +12,7 @@ public class CacheBroken {
 		.cache(20)
 		;
 
-		System.out.println(nums.toList().get());
+		System.out.println(nums.collectList().block());
 	}
 
 	private static <T> Consumer<T> print(String msg) {
