@@ -16,7 +16,7 @@ import org.cloudfoundry.client.v2.serviceinstances.ListServiceInstancesRequest;
 import org.cloudfoundry.client.v2.serviceinstances.ServiceInstanceResource;
 import org.cloudfoundry.doppler.DopplerClient;
 import org.cloudfoundry.operations.CloudFoundryOperations;
-import org.cloudfoundry.operations.CloudFoundryOperationsBuilder;
+import org.cloudfoundry.operations.DefaultCloudFoundryOperations;
 import org.cloudfoundry.operations.applications.ApplicationDetail;
 import org.cloudfoundry.operations.applications.ApplicationSummary;
 import org.cloudfoundry.operations.applications.GetApplicationEnvironmentsRequest;
@@ -61,11 +61,12 @@ public class CFV2SampleMain {
 			.cloudFoundryClient(client)
 			.build();
 
-	CloudFoundryOperations cfops = new CloudFoundryOperationsBuilder()
+	CloudFoundryOperations cfops = DefaultCloudFoundryOperations.builder()
 			.cloudFoundryClient(client)
 			.dopplerClient(doppler)
 			.uaaClient(uaaClient)
-			.target("FrameworksAndRuntimes", SPACE_NAME)
+			.organization("FrameworksAndRuntimes")
+			.space(SPACE_NAME)
 			.build();
 
 	String spaceId = getSpaceId();
