@@ -43,14 +43,16 @@ import com.google.common.collect.ImmutableList;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-public class CFV2SampleMain {
+public class CFV2SampleMain  {
 
+	private static final String API_HOST = "api.run.pivotal.io";
+	private static final String ORG_NAME = "FrameworksAndRuntimes";
 	private static final String SPACE_NAME = "kdevolder";
 
 	SpringCloudFoundryClient client = SpringCloudFoundryClient.builder()
 			.username("kdevolder@gopivotal.com")
 			.password(System.getProperty("cf.password"))
-			.host("api.run.pivotal.io")
+			.host(API_HOST)
 			.build();
 	
 	UaaClient uaaClient = ReactorUaaClient.builder()
@@ -65,7 +67,7 @@ public class CFV2SampleMain {
 			.cloudFoundryClient(client)
 			.dopplerClient(doppler)
 			.uaaClient(uaaClient)
-			.organization("FrameworksAndRuntimes")
+			.organization(ORG_NAME)
 			.space(SPACE_NAME)
 			.build();
 
