@@ -23,8 +23,5 @@ public class SimplerSample {
 			} catch (InterruptedException e) {
 			}
 		}
-		
-		
 	}
-	
 }

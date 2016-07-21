@@ -1,46 +1,17 @@
 package com.github.kdvolder.cfv2sample;
 
-import java.time.Duration;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.function.Predicate;
-
-import org.apache.commons.lang.RandomStringUtils;
-import org.cloudfoundry.client.CloudFoundryClient;
-import org.cloudfoundry.client.v2.info.GetInfoRequest;
-import org.cloudfoundry.client.v2.info.GetInfoResponse;
-import org.cloudfoundry.client.v2.serviceinstances.DeleteServiceInstanceRequest;
-import org.cloudfoundry.client.v2.serviceinstances.ListServiceInstancesRequest;
-import org.cloudfoundry.client.v2.serviceinstances.ServiceInstanceResource;
 import org.cloudfoundry.doppler.DopplerClient;
 import org.cloudfoundry.operations.CloudFoundryOperations;
 import org.cloudfoundry.operations.DefaultCloudFoundryOperations;
-import org.cloudfoundry.operations.applications.ApplicationDetail;
-import org.cloudfoundry.operations.applications.ApplicationSummary;
-import org.cloudfoundry.operations.applications.GetApplicationEnvironmentsRequest;
 import org.cloudfoundry.operations.applications.GetApplicationRequest;
-import org.cloudfoundry.operations.applications.LogsRequest;
-import org.cloudfoundry.operations.applications.SetEnvironmentVariableApplicationRequest;
-import org.cloudfoundry.operations.applications.UnsetEnvironmentVariableApplicationRequest;
-import org.cloudfoundry.operations.routes.Level;
-import org.cloudfoundry.operations.routes.ListRoutesRequest;
-import org.cloudfoundry.operations.routes.MapRouteRequest;
-import org.cloudfoundry.operations.routes.Route;
-import org.cloudfoundry.operations.routes.UnmapRouteRequest;
-import org.cloudfoundry.operations.services.CreateServiceInstanceRequest;
-import org.cloudfoundry.operations.services.ServiceInstance;
-import org.cloudfoundry.operations.spaces.GetSpaceRequest;
+import org.cloudfoundry.reactor.ConnectionContext;
+import org.cloudfoundry.reactor.DefaultConnectionContext;
+import org.cloudfoundry.reactor.client.ReactorCloudFoundryClient;
 import org.cloudfoundry.reactor.doppler.ReactorDopplerClient;
+import org.cloudfoundry.reactor.tokenprovider.PasswordGrantTokenProvider;
 import org.cloudfoundry.reactor.uaa.ReactorUaaClient;
-import org.cloudfoundry.spring.client.SpringCloudFoundryClient;
 import org.cloudfoundry.uaa.UaaClient;
-import org.cloudfoundry.util.PaginationUtils;
 
-import com.google.common.collect.ImmutableList;
-
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 public class CFV2SampleMain  {
@@ -48,19 +19,31 @@ public class CFV2SampleMain  {
 	private static final String API_HOST = "api.run.pivotal.io";
 	private static final String ORG_NAME = "FrameworksAndRuntimes";
 	private static final String SPACE_NAME = "kdevolder";
+	private static final boolean SKIP_SSL = false;
+	private static final String USER = "kdevolder@gopivotal.com";
+	
+	ConnectionContext connection = DefaultConnectionContext.builder()
+			.apiHost(API_HOST)
+			.skipSslValidation(SKIP_SSL)
+			.build();
+	
+	PasswordGrantTokenProvider tokenProvider = PasswordGrantTokenProvider.builder()
+			.username(System.getProperty(USER))
+			.build();
 
-	SpringCloudFoundryClient client = SpringCloudFoundryClient.builder()
-			.username("kdevolder@gopivotal.com")
-			.password(System.getProperty("cf.password"))
-			.host(API_HOST)
+	ReactorCloudFoundryClient client = ReactorCloudFoundryClient.builder()
+			.connectionContext(connection)
+			.tokenProvider(tokenProvider)
 			.build();
 	
 	UaaClient uaaClient = ReactorUaaClient.builder()
-			.cloudFoundryClient(client)
+			.connectionContext(connection)
+			.tokenProvider(tokenProvider)
 			.build();
 
 	DopplerClient doppler = ReactorDopplerClient.builder()
-			.cloudFoundryClient(client)
+			.connectionContext(connection)
+			.tokenProvider(tokenProvider)
 			.build();
 
 	CloudFoundryOperations cfops = DefaultCloudFoundryOperations.builder()
