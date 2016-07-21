@@ -28,7 +28,8 @@ public class CFV2SampleMain  {
 			.build();
 	
 	PasswordGrantTokenProvider tokenProvider = PasswordGrantTokenProvider.builder()
-			.username(System.getProperty(USER))
+			.username(USER)
+			.password(System.getProperty("cf.password"))
 			.build();
 
 	ReactorCloudFoundryClient client = ReactorCloudFoundryClient.builder()
