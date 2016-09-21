@@ -1,11 +1,15 @@
 package com.github.kdvolder.cfv2sample;
 
 import java.io.File;
+import java.util.List;
 
 import org.cloudfoundry.doppler.DopplerClient;
 import org.cloudfoundry.operations.CloudFoundryOperations;
 import org.cloudfoundry.operations.DefaultCloudFoundryOperations;
 import org.cloudfoundry.operations.applications.GetApplicationRequest;
+import org.cloudfoundry.operations.routes.Level;
+import org.cloudfoundry.operations.routes.ListRoutesRequest;
+import org.cloudfoundry.operations.routes.Route;
 import org.cloudfoundry.reactor.ConnectionContext;
 import org.cloudfoundry.reactor.DefaultConnectionContext;
 import org.cloudfoundry.reactor.TokenProvider;
@@ -25,7 +29,7 @@ public class CFV2SampleMain  {
 
 	private static final String API_HOST = "api.run.pivotal.io";
 	private static final String ORG_NAME = "FrameworksAndRuntimes";
-	private static final String SPACE_NAME = "kdevolder";
+	private static final String SPACE_NAME = "sts-development";//"kdevolder";
 	private static final boolean SKIP_SSL = false;
 	private static final String USER = "kdevolder@gopivotal.com";
 	
@@ -81,7 +85,8 @@ public class CFV2SampleMain  {
 
 	public static void main(String[] args) throws Exception {
 		System.out.println("Starting...");
-		new CFV2SampleMain().showApplicationsWithDetails();
+//		new CFV2SampleMain().showApplicationsWithDetails();
+		new CFV2SampleMain().showRoutes();
 	}
 	
 	private void saveRefreshToken() {
@@ -95,6 +100,22 @@ public class CFV2SampleMain  {
 		}
 	}
 
+	private void showRoutes() {
+		System.out.println(">>>> getting routes ...");
+		List<Route> routes = cfops.routes().list(ListRoutesRequest.builder()
+				.level(Level.SPACE)
+				.build()
+		)
+		.collectList()
+		.block();
+		System.out.println(">>>> getting routes DONE");
+		saveRefreshToken();
+		for (Route route : routes) {
+			System.out.println(route);
+		}
+	}
+
+	
 	private void showApplicationsWithDetails() {
 		cfops.applications()
 		.list()
