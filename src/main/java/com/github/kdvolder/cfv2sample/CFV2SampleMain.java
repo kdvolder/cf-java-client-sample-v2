@@ -1,18 +1,19 @@
 package com.github.kdvolder.cfv2sample;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.List;
 
 import org.cloudfoundry.doppler.DopplerClient;
 import org.cloudfoundry.operations.CloudFoundryOperations;
 import org.cloudfoundry.operations.DefaultCloudFoundryOperations;
 import org.cloudfoundry.operations.applications.GetApplicationRequest;
+import org.cloudfoundry.operations.applications.PushApplicationRequest;
 import org.cloudfoundry.operations.routes.Level;
 import org.cloudfoundry.operations.routes.ListRoutesRequest;
 import org.cloudfoundry.operations.routes.Route;
 import org.cloudfoundry.reactor.ConnectionContext;
 import org.cloudfoundry.reactor.DefaultConnectionContext;
-import org.cloudfoundry.reactor.TokenProvider;
 import org.cloudfoundry.reactor.client.ReactorCloudFoundryClient;
 import org.cloudfoundry.reactor.doppler.ReactorDopplerClient;
 import org.cloudfoundry.reactor.tokenprovider.AbstractUaaTokenProvider;
@@ -24,27 +25,27 @@ import org.cloudfoundry.uaa.UaaClient;
 import reactor.core.publisher.Mono;
 
 public class CFV2SampleMain  {
-	
+
 	private static final String tokenPath = ".cf_java_client.json";
 
 	private static final String API_HOST = "api.run.pivotal.io";
 	private static final String ORG_NAME = "FrameworksAndRuntimes";
-	private static final String SPACE_NAME = "sts-development";//"kdevolder";
+	private static final String SPACE_NAME = "kdevolder";
 	private static final boolean SKIP_SSL = false;
 	private static final String USER = "kdevolder@gopivotal.com";
-	
+
 	ConnectionContext connection = DefaultConnectionContext.builder()
 			.apiHost(API_HOST)
 			.skipSslValidation(SKIP_SSL)
 			.build();
-	
+
 	AbstractUaaTokenProvider tokenProvider = createTokenProvider();
-	
+
 	ReactorCloudFoundryClient client = ReactorCloudFoundryClient.builder()
 			.connectionContext(connection)
 			.tokenProvider(tokenProvider)
 			.build();
-	
+
 	UaaClient uaaClient = ReactorUaaClient.builder()
 			.connectionContext(connection)
 			.tokenProvider(tokenProvider)
@@ -86,9 +87,22 @@ public class CFV2SampleMain  {
 	public static void main(String[] args) throws Exception {
 		System.out.println("Starting...");
 //		new CFV2SampleMain().showApplicationsWithDetails();
-		new CFV2SampleMain().showRoutes();
+//		new CFV2SampleMain().showRoutes();
+		new CFV2SampleMain().push();
 	}
-	
+
+	private void push() {
+		Path path = new File("/home/kdvolder/git/kdvolder/chatter/chatter-banner-service/target/chatter-banner-service-0.0.1-SNAPSHOT.jar")
+				.toPath();
+		cfops.applications().push(PushApplicationRequest.builder()
+				.application(path)
+				.name("chatter-banner-service")
+				.buildpack("java_buildpack")
+				.build()
+		)
+		.block();
+	}
+
 	private void saveRefreshToken() {
 		try {
 			String refreshToken = tokenProvider.getRefreshToken();
@@ -115,7 +129,7 @@ public class CFV2SampleMain  {
 		}
 	}
 
-	
+
 	private void showApplicationsWithDetails() {
 		cfops.applications()
 		.list()

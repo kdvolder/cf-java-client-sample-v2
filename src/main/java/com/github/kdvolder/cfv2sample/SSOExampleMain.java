@@ -4,11 +4,13 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.cloudfoundry.doppler.DopplerClient;
 import org.cloudfoundry.operations.CloudFoundryOperations;
 import org.cloudfoundry.operations.DefaultCloudFoundryOperations;
 import org.cloudfoundry.operations.applications.GetApplicationRequest;
+import org.cloudfoundry.operations.organizations.OrganizationSummary;
 import org.cloudfoundry.operations.routes.Level;
 import org.cloudfoundry.operations.routes.ListRoutesRequest;
 import org.cloudfoundry.operations.routes.Route;
@@ -27,7 +29,7 @@ public class SSOExampleMain  {
 
 	private static final String API_HOST = "api.run.pivotal.io";
 	private static final String ORG_NAME = "FrameworksAndRuntimes";
-	private static final String SPACE_NAME = "sts-development";//"kdevolder";
+	private static final String SPACE_NAME = "kdevolder";
 	private static final boolean SKIP_SSL = false;
 	private static final String USER = "kdevolder@gopivotal.com";
 
@@ -65,7 +67,7 @@ public class SSOExampleMain  {
 		try {
 			System.out.print("Enter SSO token:");
 			String ssoToken = readline();
-			System.out.print("Using SSO code: '"+ssoToken+"'");
+			System.out.println("Using SSO code: '"+ssoToken+"'");
 			return OneTimePasscodeTokenProvider.builder()
 					.passcode(ssoToken)
 					.build();
@@ -81,8 +83,15 @@ public class SSOExampleMain  {
 
 	public static void main(String[] args) throws Exception {
 		System.out.println("Starting...");
-		new SSOExampleMain().showApplicationsWithDetails();
+		SSOExampleMain main = new SSOExampleMain();
+		main.showOrgs();
+//		main.showUserInfo();
+//		main.showApplicationsWithDetails();
 		//new SSOExampleMain().showRoutes();
+	}
+
+	private void showUserInfo() {
+		System.out.println("User logged in: '"+uaaClient.getUsername().block()+"'");
 	}
 
 	private void showRoutes() {
@@ -124,6 +133,15 @@ public class SSOExampleMain  {
 				e.printStackTrace();
 			}
 		}
+	}
+
+	private void showOrgs() {
+		List<OrganizationSummary> orgs = cfops.organizations().list().collect(Collectors.toList()).block();
+		System.out.println("====Fetching orgs====");
+		for (OrganizationSummary o : orgs) {
+			System.out.println(o);
+		}
+		System.out.println("====done====");
 	}
 
 }
