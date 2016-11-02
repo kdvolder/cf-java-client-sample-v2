@@ -85,54 +85,6 @@ public class SSOExampleMain  {
 		System.out.println("Starting...");
 		SSOExampleMain main = new SSOExampleMain();
 		main.showOrgs();
-//		main.showUserInfo();
-//		main.showApplicationsWithDetails();
-		//new SSOExampleMain().showRoutes();
-	}
-
-	private void showUserInfo() {
-		System.out.println("User logged in: '"+uaaClient.getUsername().block()+"'");
-	}
-
-	private void showRoutes() {
-		System.out.println(">>>> getting routes ...");
-		List<Route> routes = cfops.routes().list(ListRoutesRequest.builder()
-				.level(Level.SPACE)
-				.build()
-		)
-		.collectList()
-		.block();
-		System.out.println(">>>> getting routes DONE");
-		for (Route route : routes) {
-			System.out.println(route);
-		}
-	}
-
-
-	private void showApplicationsWithDetails() {
-		cfops.applications()
-		.list()
-		.flatMap((appSummary) -> {
-			return cfops.applications().get(GetApplicationRequest.builder()
-				.name(appSummary.getName())
-				.build()
-			)
-			.otherwise((error) -> {
-				System.err.println("Error gettting details for app: "+appSummary.getName());
-				error.printStackTrace(System.err);
-				return Mono.empty();
-			});
-		})
-		.doOnTerminate(() -> System.out.println("====done===="))
-		.subscribe(System.out::println);
-		while (true) {
-			try {
-				Thread.sleep(2000);
-			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		}
 	}
 
 	private void showOrgs() {
