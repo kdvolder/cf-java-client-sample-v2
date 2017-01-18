@@ -86,9 +86,9 @@ public class CFV2SampleMain  {
 
 	public static void main(String[] args) throws Exception {
 		System.out.println("Starting...");
-//		new CFV2SampleMain().showApplicationsWithDetails();
+		new CFV2SampleMain().showApplicationsWithDetails();
 //		new CFV2SampleMain().showRoutes();
-		new CFV2SampleMain().push();
+//		new CFV2SampleMain().push();
 	}
 
 	private void push() {
