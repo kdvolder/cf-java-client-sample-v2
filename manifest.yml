@@ -1,0 +1,6 @@
+applications:
+- name: test-static-aaasd
+  buildpack: staticfile_buildpack
+  health-check-type: http
+  health-check-http-endpoint: /testbad.txt
+  path: testapp.zip

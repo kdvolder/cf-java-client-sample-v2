@@ -5,6 +5,9 @@
 	<artifactId>cf-java-client-sample-v2</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 
+	<properties>
+	  <cf-java-version>2.14.0.BUILD-SNAPSHOT</cf-java-version>
+	</properties>
 
 	<repositories>
 		<repository>
@@ -72,23 +75,23 @@
 		<dependency>
 			<groupId>org.cloudfoundry</groupId>
 			<artifactId>cloudfoundry-client-reactor</artifactId>
-			<version>2.3.0.BUILD-SNAPSHOT</version>
+			<version>${cf-java-version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.cloudfoundry</groupId>
 			<artifactId>cloudfoundry-operations</artifactId>
-			<version>2.3.0.BUILD-SNAPSHOT</version>
+			<version>${cf-java-version}</version>
 		</dependency>
-		<dependency>
-			<groupId>io.projectreactor</groupId>
-			<artifactId>reactor-core</artifactId>
-			<version>3.0.5.BUILD-SNAPSHOT</version>
-		</dependency>
-		<dependency>
-			<groupId>io.projectreactor.ipc</groupId>
-			<artifactId>reactor-netty</artifactId>
-			<version>0.6.0.RELEASE</version>
-		</dependency>
+<!-- 		<dependency> -->
+<!-- 			<groupId>io.projectreactor</groupId> -->
+<!-- 			<artifactId>reactor-core</artifactId> -->
+<!-- 			<version>3.0.5.BUILD-SNAPSHOT</version> -->
+<!-- 		</dependency> -->
+<!-- 		<dependency> -->
+<!-- 			<groupId>io.projectreactor.ipc</groupId> -->
+<!-- 			<artifactId>reactor-netty</artifactId> -->
+<!-- 			<version>0.6.0.RELEASE</version> -->
+<!-- 		</dependency> -->
 		<!-- <dependency> -->
 		<!-- <groupId>io.netty</groupId> -->
 		<!-- <artifactId>netty-all</artifactId> -->
