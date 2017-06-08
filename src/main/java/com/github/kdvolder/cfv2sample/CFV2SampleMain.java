@@ -68,7 +68,7 @@ public class CFV2SampleMain  {
 			System.out.println("Using PASSWORD token for auth");
 			return PasswordGrantTokenProvider.builder()
 					.username(USER)
-					.password("admin"/*System.getProperty("cf.password")*/)
+					.password(System.getProperty("cf.password"))
 					.build();
 //		}
 	}
@@ -79,12 +79,11 @@ public class CFV2SampleMain  {
 	}
 
 	private void pushAnApp() {
-		
-		File mf = new File("manifest.yml");
+		File mf = new File("manifest.yml")
+				.getAbsoluteFile(); //Workaround bug in manifest parser related to relative path handling.
 		if (!mf.isFile()) {
 			throw new IllegalStateException("Not a file? "+mf);
 		}
-		
 		PushApplicationManifestRequest req = PushApplicationManifestRequest.builder()
 				.addAllManifests(ApplicationManifestUtils.read(mf.toPath()))
 				.build();
