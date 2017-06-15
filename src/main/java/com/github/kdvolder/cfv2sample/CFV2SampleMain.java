@@ -7,8 +7,10 @@ import java.util.List;
 import org.cloudfoundry.doppler.DopplerClient;
 import org.cloudfoundry.operations.CloudFoundryOperations;
 import org.cloudfoundry.operations.DefaultCloudFoundryOperations;
+import org.cloudfoundry.operations.applications.ApplicationDetail;
 import org.cloudfoundry.operations.applications.ApplicationManifest;
 import org.cloudfoundry.operations.applications.ApplicationManifestUtils;
+import org.cloudfoundry.operations.applications.GetApplicationRequest;
 import org.cloudfoundry.operations.applications.PushApplicationManifestRequest;
 import org.cloudfoundry.operations.spaces.SpaceSummary;
 import org.cloudfoundry.reactor.ConnectionContext;
@@ -23,16 +25,19 @@ import org.springframework.util.Assert;
 
 public class CFV2SampleMain  {
 
-	private static final String API_HOST = "api.run.pivotal.io";
-	private static final String ORG_NAME = "FrameworksAndRuntimes";
-	private static final String SPACE_NAME = "kdevolder";
-	private static final boolean SKIP_SSL = false;
-	private static final String USER = "kdevolder@gopivotal.com";
+//	private static final String API_HOST = "api.run.pivotal.io";
+//	private static final String ORG_NAME = "FrameworksAndRuntimes";
+//	private static final String SPACE_NAME = "kdevolder";
+//	private static final boolean SKIP_SSL = false;
+//	private static final String USER = "kdevolder@gopivotal.com";
+//	private static final String PASSWORD = System.getProperty("cf.password");
 
-//	private static final String API_HOST = "api.local2.pcfdev.io";
-//	private static final String ORG_NAME = "my&org";
-//	private static final boolean SKIP_SSL = true;
-//	private static final String USER = "admin";
+	private static final String API_HOST = "api.local2.pcfdev.io";
+	private static final String ORG_NAME = "pcfdev-org";
+	private static final String SPACE_NAME = "pcfdev-space";
+	private static final boolean SKIP_SSL = true;
+	private static final String USER = "admin";
+	private static final String PASSWORD = "admin";
 
 	ConnectionContext connection = DefaultConnectionContext.builder()
 			.apiHost(API_HOST)
@@ -68,7 +73,7 @@ public class CFV2SampleMain  {
 			System.out.println("Using PASSWORD token for auth");
 			return PasswordGrantTokenProvider.builder()
 					.username(USER)
-					.password(System.getProperty("cf.password"))
+					.password(PASSWORD)
 					.build();
 //		}
 	}
@@ -89,6 +94,12 @@ public class CFV2SampleMain  {
 				.build();
 				
 		cfops.applications().pushManifest(req).block();
+		
+		ApplicationDetail appDetails = cfops.applications().get(GetApplicationRequest.builder()
+				.name("test-static-aaasd")
+				.build()
+		).block();
+		System.out.println("app deployed at: "+appDetails.getUrls());
 	}
 
 

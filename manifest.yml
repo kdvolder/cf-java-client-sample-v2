@@ -1,6 +1,6 @@
 applications:
 - name: test-static-aaasd
   buildpack: staticfile_buildpack
-  health-check-type: http
-  health-check-http-endpoint: /testbad.txt
+  routes:
+  - route: tcp.local2.pcfdev.io:61001
   path: testapp.zip
