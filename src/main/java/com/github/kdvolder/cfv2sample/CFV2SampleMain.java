@@ -10,6 +10,7 @@ import org.cloudfoundry.operations.DefaultCloudFoundryOperations;
 import org.cloudfoundry.operations.applications.ApplicationDetail;
 import org.cloudfoundry.operations.applications.ApplicationManifest;
 import org.cloudfoundry.operations.applications.ApplicationManifestUtils;
+import org.cloudfoundry.operations.applications.GetApplicationManifestRequest;
 import org.cloudfoundry.operations.applications.GetApplicationRequest;
 import org.cloudfoundry.operations.applications.PushApplicationManifestRequest;
 import org.cloudfoundry.operations.routes.MapRouteRequest;
@@ -23,6 +24,8 @@ import org.cloudfoundry.reactor.tokenprovider.PasswordGrantTokenProvider;
 import org.cloudfoundry.reactor.uaa.ReactorUaaClient;
 import org.cloudfoundry.uaa.UaaClient;
 import org.springframework.util.Assert;
+
+import reactor.core.publisher.Mono;
 
 public class CFV2SampleMain  {
 
@@ -113,10 +116,18 @@ public class CFV2SampleMain  {
 				.build()
 		).block();
 
-		System.out.println("app deployed at: "+cfops.applications().get(GetApplicationRequest.builder()
+		System.out.println("uris from 'ApplicationDetails': "+cfops.applications().get(GetApplicationRequest.builder()
 				.name(appName)
 				.build()
 		).block().getUrls());
+		
+		ApplicationManifest manifest = cfops.applications().getApplicationManifest(GetApplicationManifestRequest.builder()
+				.name(appName)
+				.build()
+		).block();
+		
+		System.out.println("routes from manifest: " + manifest.getRoutes());
+		
 	}
 
 	private void pushAnApp() {
