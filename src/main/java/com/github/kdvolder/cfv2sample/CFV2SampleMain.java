@@ -131,6 +131,7 @@ public class CFV2SampleMain  {
 	}
 
 	private void pushAnApp() {
+		String appName = "test-static-aaasd";
 		File mf = new File("manifest.yml")
 				.getAbsoluteFile(); //Workaround bug in manifest parser related to relative path handling.
 		if (!mf.isFile()) {
@@ -142,11 +143,17 @@ public class CFV2SampleMain  {
 				
 		cfops.applications().pushManifest(req).block();
 		
-		ApplicationDetail appDetails = cfops.applications().get(GetApplicationRequest.builder()
-				.name("test-static-aaasd")
+		System.out.println("uris from 'ApplicationDetails': "+cfops.applications().get(GetApplicationRequest.builder()
+				.name(appName)
+				.build()
+		).block().getUrls());
+		
+		ApplicationManifest manifest = cfops.applications().getApplicationManifest(GetApplicationManifestRequest.builder()
+				.name(appName)
 				.build()
 		).block();
-		System.out.println("app deployed at: "+appDetails.getUrls());
+		
+		System.out.println("routes from manifest: " + manifest.getRoutes());
 	}
 
 
