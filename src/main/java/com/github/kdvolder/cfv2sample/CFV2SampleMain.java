@@ -84,7 +84,7 @@ public class CFV2SampleMain  {
 
 	public static void main(String[] args) throws Exception {
 		System.out.println("Starting...");
-		new CFV2SampleMain().pushAppAndBindTcpRoute();
+		new CFV2SampleMain().pushAppAndRepushWithDifferentRoute();
 	}
 
 	private void pushAppAndBindTcpRoute() {
@@ -112,7 +112,8 @@ public class CFV2SampleMain  {
 		cfops.routes().map(MapRouteRequest.builder()
 				.applicationName(appName)
 				.domain(tcpDomain)
-				.randomPort(true)
+				.port(61005)
+//				.randomPort(true)
 				.build()
 		).block();
 
@@ -128,6 +129,39 @@ public class CFV2SampleMain  {
 		
 		System.out.println("routes from manifest: " + manifest.getRoutes());
 		
+	}
+
+	private void pushAppAndRepushWithDifferentRoute() {
+		String appName = "test-static-aaasd";
+		
+		String[] manifests = {
+				"manifest-1.yml",
+				"manifest-2.yml"
+		};
+		for (String fname : manifests) {
+			File mf = new File(fname)
+					.getAbsoluteFile(); //Workaround bug in manifest parser related to relative path handling.
+			if (!mf.isFile()) {
+				throw new IllegalStateException("Not a file? "+mf);
+			}
+			PushApplicationManifestRequest req = PushApplicationManifestRequest.builder()
+					.addAllManifests(ApplicationManifestUtils.read(mf.toPath()))
+					.build();
+					
+			cfops.applications().pushManifest(req).block();
+			
+			System.out.println("uris from 'ApplicationDetails': "+cfops.applications().get(GetApplicationRequest.builder()
+					.name(appName)
+					.build()
+			).block().getUrls());
+			
+			ApplicationManifest manifest = cfops.applications().getApplicationManifest(GetApplicationManifestRequest.builder()
+					.name(appName)
+					.build()
+			).block();
+			
+			System.out.println("routes from manifest: " + manifest.getRoutes());
+		}
 	}
 
 	private void pushAnApp() {
@@ -152,7 +186,6 @@ public class CFV2SampleMain  {
 				.name(appName)
 				.build()
 		).block();
-		
 		System.out.println("routes from manifest: " + manifest.getRoutes());
 	}
 

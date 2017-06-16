@@ -1,0 +1,5 @@
+applications:
+- name: test-static-aaasd
+  buildpack: staticfile_buildpack
+  path: testapp.zip
+  host: the-second
