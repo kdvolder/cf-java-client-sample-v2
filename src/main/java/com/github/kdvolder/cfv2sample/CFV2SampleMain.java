@@ -12,6 +12,7 @@ import org.cloudfoundry.operations.applications.ApplicationManifest;
 import org.cloudfoundry.operations.applications.ApplicationManifestUtils;
 import org.cloudfoundry.operations.applications.GetApplicationRequest;
 import org.cloudfoundry.operations.applications.PushApplicationManifestRequest;
+import org.cloudfoundry.operations.routes.MapRouteRequest;
 import org.cloudfoundry.operations.spaces.SpaceSummary;
 import org.cloudfoundry.reactor.ConnectionContext;
 import org.cloudfoundry.reactor.DefaultConnectionContext;
@@ -80,7 +81,42 @@ public class CFV2SampleMain  {
 
 	public static void main(String[] args) throws Exception {
 		System.out.println("Starting...");
-		new CFV2SampleMain().pushAnApp();
+		new CFV2SampleMain().pushAppAndBindTcpRoute();
+	}
+
+	private void pushAppAndBindTcpRoute() {
+		File mf = new File("manifest.yml")
+				.getAbsoluteFile(); //Workaround bug in manifest parser related to relative path handling.
+		if (!mf.isFile()) {
+			throw new IllegalStateException("Not a file? "+mf);
+		}
+		PushApplicationManifestRequest req = PushApplicationManifestRequest.builder()
+				.addAllManifests(ApplicationManifestUtils.read(mf.toPath()))
+				.build();
+				
+		cfops.applications().pushManifest(req).block();
+		
+		String appName = "test-static-aaasd";
+		ApplicationDetail appDetails = cfops.applications().get(GetApplicationRequest.builder()
+				.name(appName)
+				.build()
+		).block();
+		System.out.println("app deployed at: "+appDetails.getUrls());
+		
+		System.out.println("Binding a tcp route...");
+		String tcpDomain = "tcp.local2.pcfdev.io";
+		
+		cfops.routes().map(MapRouteRequest.builder()
+				.applicationName(appName)
+				.domain(tcpDomain)
+				.randomPort(true)
+				.build()
+		).block();
+
+		System.out.println("app deployed at: "+cfops.applications().get(GetApplicationRequest.builder()
+				.name(appName)
+				.build()
+		).block().getUrls());
 	}
 
 	private void pushAnApp() {
