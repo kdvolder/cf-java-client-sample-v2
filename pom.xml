@@ -6,7 +6,7 @@
 	<version>0.0.1-SNAPSHOT</version>
 
 	<properties>
-	  <cf-java-version>2.14.0.BUILD-SNAPSHOT</cf-java-version>
+	  <cf-java-version>3.15.0.RELEASE</cf-java-version>
 	</properties>
 
 	<repositories>
